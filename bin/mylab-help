@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+set -eu
+
+usage() {
+  cat << EOT
+Options:
+  --version,-v          Print version
+  --help,-h             Print help
+
+Commands:
+  deploy                Deploy a VM
+  start                 Start a VM
+  shutdown              Shutdown a VM
+  destroy               Destroy a VM
+EOT
+}
+
+usage

@@ -1,0 +1,148 @@
+#!/usr/bin/env zsh
+
+set -e
+
+readonly TEMPLATE="${MYLAB_ROOT}/templates/ubuntu.json"
+readonly LIBRARY=/mylib/
+readonly PREFIX=ubuntu
+
+abort() {
+  printf '%s\n' "$*"
+  exit 1
+}
+
+usage() {
+  cat <<EOT
+Options:
+  --name,-n
+  --cpu,-c
+  --memory,-m
+  --disk,-d
+  --help,-h
+EOT
+}
+
+while [ $# -gt 0 ];
+do
+  case "${1}" in
+
+    --name|-n)
+      VM_NAME=${2}
+      shift
+    ;;
+
+    --cpu|-c)
+      VCPU=${2}
+      shift
+    ;;
+
+    --memory|-m)
+      MEMORY=${2}
+      shift
+    ;;
+
+    --disk|-d)
+      DISK=${2}
+      shift
+    ;;
+
+    -h|--help)
+      usage
+      exit 0
+    ;;
+
+  esac
+  shift
+done
+
+if [[ -z "${VM_NAME}" ]]; then
+  read -p "Name: " VM_NAME
+fi
+
+if [[ -z "${OVA}" ]]; then
+  OVA=$(govc library.ls $LIBRARY | grep $PREFIX | sort | fzf)
+fi
+
+if [[ -z "${VCPU}" ]]; then
+  read -p "vCPU: " VCPU
+fi
+
+if [[ -z "${MEMORY}" ]]; then
+  read -p "Memory(GB): " MEMORY
+fi
+
+if [[ -z "${DISK}" ]]; then
+  read -p "Disk(GB): " DISK
+fi
+
+if [[ -z "${NETWORK}" ]]; then
+  NETWORK=$(govc find -type n | grep -v Uplink | sort | fzf)
+fi
+
+if [[ -f "${HOME}/.ssh/id_rsa.pub" ]]; then
+  PUBKEY=$(cat ${HOME}/.ssh/id_rsa_mylab.pub | awk -F' ' '{print $1,$2}')
+else
+  printf "RSA public key for mylab doesn't exist\n"
+  exit 1
+fi
+
+USERDATA=$(cat <<EOT | base64
+#cloud-config
+chpasswd:
+  list: |
+    ubuntu:mylab123!
+  expire: false
+groups:
+  - docker
+users:
+  - default
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: sudo
+    shell: /bin/bash
+ntp:
+  enabled: true
+  ntp_client: chrony
+  servers:
+    - ntp.nict.jp
+  timezone: Asia/Tokyo
+packages:
+  - lsb-release
+  - ca-certificates
+  - curl
+  - gnupg
+runcmd:
+  - systemctl enable chronyd
+  - echo -n > /etc/machine-id
+final_message: "The system is prepared, after $UPTIME seconds"
+power_state:
+  timeout: 30
+  mode: reboot
+EOT
+)
+
+printf "Create a template file\n"
+cp "${TEMPLATE}" "${VM_NAME}_option.json"
+OPTIONS="${VM_NAME}_option.json"
+
+sed -i -e "s|VAPP_NAME|${VM_NAME}|"      "${OPTIONS}"
+sed -i -e "s|VAPP_USERDATA|${USERDATA}|" "${OPTIONS}"
+sed -i -e "s|VAPP_PUBKEY|${PUBKEY}|"     "${OPTIONS}"
+sed -i -e "s|VAPP_NETWORK|${NETWORK}|"   "${OPTIONS}"
+
+printf "Start to deploy ${VM_NAME}\n"
+govc library.deploy -options "${OPTIONS}" "${OVA}"
+
+sleep 5
+
+printf "Change ${VM_NAME}'s size(CPU/MEM)]\n"
+govc vm.change -vm "${VM_NAME}" -c "${VCPU}" -m $((MEMORY*1024))
+
+printf "Change ${VM_NAME}'s disk size\n"
+govc vm.disk.change -vm "${VM_NAME}" -size="${DISK}G"
+
+printf "Power on ${VM_NAME}\n"
+govc vm.power -on "${VM_NAME}"
+
+rm -rf "${WORK_DIR}"
+printf "Deployment completed\n"

@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+
+set -eu
+
+printf "mylab: version 0.0.1\n"

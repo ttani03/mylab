@@ -1,0 +1,29 @@
+#!/usr/bin/env zsh
+
+set -eu
+
+abort() {
+  printf '%s\n' "$*"
+  exit 1
+}
+
+subcmd="$1"
+case "$subcmd" in
+
+  "")
+    exec mylab-deploy-help
+  ;;
+
+  -h|--help)
+    exec mylab-deploy-help
+  ;;
+
+  *)
+    cmd_path="$(command -v mylab-deploy-$subcmd || true)"
+    if [[ -z ${cmd_path} ]]; then
+      abort "No such command: ${subcmd}"
+    fi
+
+    shift 1
+    exec "${cmd_path}" "$@"
+esac
