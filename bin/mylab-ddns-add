@@ -1,0 +1,43 @@
+#!/usr/bin/env zsh
+
+set -e
+
+abort() {
+  printf '%s\n' "$*"
+  exit 1
+}
+
+usage() {
+  cat <<EOT
+Options:
+  --help,-h
+EOT
+}
+
+while [ $# -gt 0 ];
+do
+  case "${1}" in
+
+    -h|--help)
+      usage
+      exit 0
+    ;;
+
+  esac
+  shift
+done
+
+VMS=($(govc find . -type m -runtime.powerState poweredOn | xargs basename | sort | fzf -m))
+
+for VM_NAME in "${VMS[@]}"
+do
+  printf "Get IP address of ${VM_NAME}\n"
+  VM_IP=$(govc vm.ip -v4 "${VM_NAME}")
+  sleep 0.5
+  if [[ -z "${VM_IP}" ]]; then
+    printf "Not found IPv4 address of ${VM_NAME}\n"
+  else
+    printf "Add DNS record of ${VM_NAME}\n"
+    ddns add -n ${VM_NAME} -i ${VM_IP}
+  fi
+done

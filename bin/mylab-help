@@ -13,6 +13,7 @@ Commands:
   start                 Start a VM
   shutdown              Shutdown a VM
   destroy               Destroy a VM
+  ddns                  Update DNS records
 EOT
 }
 

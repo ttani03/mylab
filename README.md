@@ -9,6 +9,7 @@
 - fzf
 - zsh
 - DHCP server
+- [ddns-client](https://github.com/ttani03/ddns-client)
 
 ## Preparation
 
@@ -40,6 +41,8 @@
 
 ## Usage
 
+### Deploy VMs
+
 1. Deploy ubuntu VM `test-vm` with 2 vCPU, 4 GB memory and 128GB disk.
 
     ```
@@ -47,3 +50,11 @@
     ```
 
 2. Access to the deployed VM with user `ubuntu` and key `id_rsa_mylab`.
+
+### Add/Delete DNS record for deployed VMs
+
+1. Do the following command and select a VM to add or delete a DNS record
+
+```
+mylab ddns [add|delete]
+```

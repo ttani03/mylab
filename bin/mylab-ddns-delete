@@ -1,0 +1,37 @@
+#!/usr/bin/env zsh
+
+set -e
+
+abort() {
+  printf '%s\n' "$*"
+  exit 1
+}
+
+usage() {
+  cat <<EOT
+Options:
+  --help,-h
+EOT
+}
+
+while [ $# -gt 0 ];
+do
+  case "${1}" in
+
+    -h|--help)
+      usage
+      exit 0
+    ;;
+
+  esac
+  shift
+done
+
+VMS=($(govc find . -type m | xargs basename | sort | fzf -m))
+
+for VM_NAME in "${VMS[@]}"
+do
+  printf "Delete DNS record of ${VM_NAME}\n"
+  ddns delete -n ${VM_NAME}
+  fi
+done
