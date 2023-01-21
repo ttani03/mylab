@@ -27,7 +27,7 @@ do
   shift
 done
 
-VMS=($(govc find . -type m | xargs basename | sort | fzf -m))
+VMS=($(govc find . -type m | xargs basename | grep -v "/" | sort | fzf -m))
 
 for VM_NAME in "${VMS[@]}"
 do
