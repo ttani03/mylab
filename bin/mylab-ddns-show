@@ -27,10 +27,4 @@ do
   shift
 done
 
-VMS=($(govc find . -type m | xargs basename | sort | fzf -m))
-
-for VM_NAME in "${VMS[@]}"
-do
-  printf "Delete DNS record of ${VM_NAME}\n"
-  ddns delete -n ${VM_NAME}
-done
+ddns get | sort

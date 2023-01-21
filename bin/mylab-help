@@ -14,6 +14,7 @@ Commands:
   shutdown              Shutdown a VM
   destroy               Destroy a VM
   ddns                  Update DNS records
+  ssh                   ssh to a VM
 EOT
 }
 
