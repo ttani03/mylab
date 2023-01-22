@@ -27,4 +27,4 @@ do
   shift
 done
 
-ddns get | sort
+ddns show | sort
